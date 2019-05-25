@@ -1319,6 +1319,17 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
             _isAudioSync = 0;
             break;
         }
+      case FFP_MSG_VIDEO_TS_FILE_OPEN: {
+        NSLog(@"FFP_MSG_VIDEO_TS_FILE_OPEN:\n");
+        const char *url = avmsg->obj;
+        if (url != NULL) {
+          NSString *filePath = [NSString stringWithUTF8String:url];
+          [[NSNotificationCenter defaultCenter]
+           postNotificationName:IJKMPMoviePlayerDidOpenTsFileNotification
+           object:@{filePath : self}];
+        }
+        break;
+      }
         default:
             // NSLog(@"unknown FFP_MSG_xxx(%d)\n", avmsg->what);
             break;
