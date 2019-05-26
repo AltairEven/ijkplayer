@@ -3056,6 +3056,30 @@ static int is_realtime(AVFormatContext *s)
         return 1;
     return 0;
 }
+  
+static int io_open_callback(struct AVFormatContext *s, AVIOContext **p, const char *url, int flags, const AVIOInterruptCB *int_cb, AVDictionary **options)
+{
+  if (url == NULL) {
+    return -1;
+  }
+  bool is_ts = false;
+  for(int i = 0; i < 1024; i++) {
+    if (url[i] == '\0' && i > 3) {
+      char c_s = url[i - 1];
+      char c_t = url[i - 2];
+      char c_dot = url[i - 3];
+      if (c_s == 's' && c_t == 't' && c_dot == '.') {
+        is_ts = true;
+      }
+      break;
+    }
+  }
+  if (is_ts) {
+    av_log(NULL, AV_LOG_FATAL, "ts********************************************: %s\n", url);
+    ffp_notify_msg4((FFPlayer *)s->opaque, FFP_MSG_VIDEO_TS_FILE_OPEN, 0, 0, (void *)url, (int)strlen(url));
+  }
+  return 0;
+}
 
 /* this thread gets the stream from the disk or the network */
 static int read_thread(void *arg)
@@ -3091,6 +3115,8 @@ static int read_thread(void *arg)
     is->eof = 0;
 
     ic = avformat_alloc_context();
+    ic->open_cb = io_open_callback;
+    ic->opaque = ffp;
     if (!ic) {
         av_log(NULL, AV_LOG_FATAL, "Could not allocate context.\n");
         ret = AVERROR(ENOMEM);
