@@ -3063,6 +3063,7 @@ static int io_open_callback(struct AVFormatContext *s, AVIOContext **p, const ch
     return -1;
   }
   bool is_ts = false;
+  char *path = calloc(1024, sizeof(char));
   for(int i = 0; i < 1024; i++) {
     if (url[i] == '\0' && i > 3) {
       char c_s = url[i - 1];
@@ -3070,14 +3071,16 @@ static int io_open_callback(struct AVFormatContext *s, AVIOContext **p, const ch
       char c_dot = url[i - 3];
       if (c_s == 's' && c_t == 't' && c_dot == '.') {
         is_ts = true;
+        memcpy(path, url, i + 1);
       }
       break;
     }
   }
   if (is_ts) {
     av_log(NULL, AV_LOG_FATAL, "ts********************************************: %s\n", url);
-    ffp_notify_msg4((FFPlayer *)s->opaque, FFP_MSG_VIDEO_TS_FILE_OPEN, 0, 0, (void *)url, (int)strlen(url));
+    ffp_notify_msg4((FFPlayer *)s->opaque, FFP_MSG_VIDEO_TS_FILE_OPEN, 0, 0, (void *)path, (int)strlen(path));
   }
+  free(path);
   return 0;
 }
 
