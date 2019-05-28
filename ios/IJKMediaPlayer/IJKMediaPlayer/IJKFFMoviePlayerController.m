@@ -1323,9 +1323,12 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
         NSLog(@"FFP_MSG_VIDEO_TS_FILE_OPEN:\n");
         const char *url = avmsg->obj;
         if (url != NULL) {
-          NSString *filePath = [NSString stringWithUTF8String:url];
-          filePath = [filePath stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+          char *path = calloc(1024, sizeof(char));
+          memcpy(path, url, avmsg->arg1);
+          NSString *filePath = [NSString stringWithUTF8String:path];
+          free(path);
           if (filePath) {
+            filePath = [filePath stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
             [[NSNotificationCenter defaultCenter]
              postNotificationName:IJKMPMoviePlayerDidOpenTsFileNotification
              object:self userInfo:@{IJKMPMoviePlayerDidOpenTsFilePathKey: filePath}];

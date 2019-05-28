@@ -3064,7 +3064,8 @@ static int io_open_callback(struct AVFormatContext *s, AVIOContext **p, const ch
   }
   bool is_ts = false;
   char *path = calloc(1024, sizeof(char));
-  for(int i = 0; i < 1024; i++) {
+  int i = 0;
+  for(; i < 1024; i++) {
     if (url[i] == '\0' && i > 3) {
       char c_s = url[i - 1];
       char c_t = url[i - 2];
@@ -3078,7 +3079,7 @@ static int io_open_callback(struct AVFormatContext *s, AVIOContext **p, const ch
   }
   if (is_ts) {
     av_log(NULL, AV_LOG_FATAL, "ts********************************************: %s\n", url);
-    ffp_notify_msg4((FFPlayer *)s->opaque, FFP_MSG_VIDEO_TS_FILE_OPEN, 0, 0, (void *)path, (int)strlen(path));
+    ffp_notify_msg4((FFPlayer *)s->opaque, FFP_MSG_VIDEO_TS_FILE_OPEN, i + 1, 0, (void *)path, i + 1);
   }
   free(path);
   return 0;
