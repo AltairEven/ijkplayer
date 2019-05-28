@@ -1324,6 +1324,7 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
         const char *url = avmsg->obj;
         if (url != NULL) {
           NSString *filePath = [NSString stringWithUTF8String:url];
+          filePath = [filePath stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
           if (filePath) {
             NSLog(@"ts file opened: %@", filePath);
             [[NSNotificationCenter defaultCenter]
