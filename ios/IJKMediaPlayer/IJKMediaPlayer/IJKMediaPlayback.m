@@ -57,6 +57,7 @@ NSString *const IJKMPMoviePlayerSeekVideoStartNotification  = @"IJKMPMoviePlayer
 
 
 NSString *const IJKMPMoviePlayerDidOpenTsFileNotification  = @"IJKMPMoviePlayerDidOpenTsFileNotification";
+NSString *const IJKMPMoviePlayerDidOpenTsFilePathKey  = @"IJKMPMoviePlayerDidOpenTsFileNameKey";
 
 @implementation IJKMediaUrlOpenData {
     NSString *_url;

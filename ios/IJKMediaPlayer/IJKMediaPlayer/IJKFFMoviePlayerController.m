@@ -1324,9 +1324,12 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
         const char *url = avmsg->obj;
         if (url != NULL) {
           NSString *filePath = [NSString stringWithUTF8String:url];
-          [[NSNotificationCenter defaultCenter]
-           postNotificationName:IJKMPMoviePlayerDidOpenTsFileNotification
-           object:@{filePath : self}];
+          if (filePath) {
+            NSLog(@"ts file opened: %@", filePath);
+            [[NSNotificationCenter defaultCenter]
+             postNotificationName:IJKMPMoviePlayerDidOpenTsFileNotification
+             object:self userInfo:@{IJKMPMoviePlayerDidOpenTsFilePathKey: filePath}];
+          }
         }
         break;
       }
