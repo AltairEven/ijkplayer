@@ -1326,10 +1326,14 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
           NSString *filePath = [NSString stringWithUTF8String:url];
           filePath = [filePath stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
           if (filePath) {
-            NSLog(@"ts file opened: %@", filePath);
-            [[NSNotificationCenter defaultCenter]
-             postNotificationName:IJKMPMoviePlayerDidOpenTsFileNotification
-             object:self userInfo:@{IJKMPMoviePlayerDidOpenTsFilePathKey: filePath}];
+              NSRange extension = [filePath rangeOfString:@".ts"];
+              if (extension.location != NSNotFound) {
+                filePath = [filePath substringToIndex:extension.location + extension.length];
+                NSLog(@"ts file opened: %@", filePath);
+                [[NSNotificationCenter defaultCenter]
+                 postNotificationName:IJKMPMoviePlayerDidOpenTsFileNotification
+                 object:self userInfo:@{IJKMPMoviePlayerDidOpenTsFilePathKey: filePath}];
+              }
           }
         }
         break;
