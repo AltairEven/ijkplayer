@@ -869,6 +869,48 @@ static size_t parse_ass_subtitle(const char *ass, char *output)
     return 0;
 }
 
+static void vout_display_overlay_count(FFPlayer *ffp) {
+  if (!ffp->has_setup_increased_duration) {
+    return;
+  }
+  int64_t frame_cout = ++ffp->ts_frame_count;
+  int last_index = ffp->ts_segment_index;
+  TSSegment seg;
+  
+  bool is_first_frame = false;
+  bool touch_end = false;
+  if (frame_cout == 1) {
+    is_first_frame = true;
+    ffp->ts_segment_index = 0;
+    seg = ffp->ts_segments[0];
+  } else if (ffp->ts_segment_count > last_index) {
+    int fps = ffp->is->video_st->avg_frame_rate.num / ffp->is->video_st->avg_frame_rate.den;
+    int64_t elapsed = (double)frame_cout / (double)fps * 1000000;
+    // last segment
+    seg = ffp->ts_segments[last_index];
+    if (elapsed >= seg.duration_increased) {
+      touch_end = true;
+      ffp->ts_segment_index ++;
+    }
+  }
+  
+  if (is_first_frame) {
+    // first frame
+    ffp_notify_msg4(ffp, FFP_MSG_VIDEO_TS_RENDER_BEGIN, seg.path_len, 0, (void *)seg.file_path, seg.path_len);
+  } else if (touch_end) {
+    // ts end
+    if (last_index == ffp->ts_segment_index) {
+      // same ts
+      ffp_notify_msg4(ffp, FFP_MSG_VIDEO_TS_RENDER_END, seg.path_len, 0, (void *)seg.file_path, seg.path_len);
+    } else {
+      // different ts
+      TSSegment pre_seg = ffp->ts_segments[last_index];
+      ffp_notify_msg4(ffp, FFP_MSG_VIDEO_TS_RENDER_END, pre_seg.path_len, 0, (void *)pre_seg.file_path, pre_seg.path_len);
+      ffp_notify_msg4(ffp, FFP_MSG_VIDEO_TS_RENDER_BEGIN, seg.path_len, 0, (void *)seg.file_path, seg.path_len);
+    }
+  }
+}
+
 static void video_image_display2(FFPlayer *ffp)
 {
     VideoState *is = ffp->is;
@@ -909,6 +951,7 @@ static void video_image_display2(FFPlayer *ffp)
             }
         }
         SDL_VoutDisplayYUVOverlay(ffp->vout, vp->bmp);
+        vout_display_overlay_count(ffp);
         ffp->stat.vfps = SDL_SpeedSamplerAdd(&ffp->vfps_sampler, FFP_SHOW_VFPS_FFPLAY, "vfps[ffplay]");
         if (!ffp->first_video_frame_rendered) {
             ffp->first_video_frame_rendered = 1;
@@ -3057,6 +3100,32 @@ static int is_realtime(AVFormatContext *s)
     return 0;
 }
   
+void setup_increased_duration(FFPlayer *ffp, int64_t duration, const char *path, int path_len)
+{
+  TSSegment* seg_arr = calloc(ffp->ts_segment_count + 1, sizeof(TSSegment));
+  if (ffp->ts_segments!= NULL) {
+    memcpy(seg_arr, ffp->ts_segments, ffp->ts_segment_count * sizeof(TSSegment));
+    free(ffp->ts_segments);
+    ffp->ts_segments = NULL;
+  }
+  TSSegment seg;
+  seg.duration = duration;
+  if (ffp->ts_segment_count > 0) {
+    seg.duration_increased = duration + seg_arr[ffp->ts_segment_count - 1].duration_increased;
+  } else {
+    seg.duration_increased = duration;
+  }
+  char *temp_path = calloc(path_len + 1, sizeof(char));
+  memcpy(temp_path, path, path_len);
+  seg.file_path = temp_path;
+  seg.path_len = path_len;
+  seg_arr[ffp->ts_segment_count] = seg;
+  
+  ffp->ts_segments = seg_arr;
+  ffp->ts_segment_count += 1;
+  ffp->has_setup_increased_duration = true;
+}
+  
 static int io_open_callback(struct AVFormatContext *s, AVIOContext **p, const char *url, int flags, const AVIOInterruptCB *int_cb, AVDictionary **options)
 {
   if (url == NULL) {
@@ -3079,7 +3148,8 @@ static int io_open_callback(struct AVFormatContext *s, AVIOContext **p, const ch
   }
   if (is_ts) {
     av_log(NULL, AV_LOG_FATAL, "ts********************************************: %s\n", url);
-    ffp_notify_msg4((FFPlayer *)s->opaque, FFP_MSG_VIDEO_TS_FILE_OPEN, i + 1, 0, (void *)path, i + 1);
+    FFPlayer *ffp = (FFPlayer *)s->opaque;
+    ffp_notify_msg4(ffp, FFP_MSG_VIDEO_TS_FILE_OPEN, i + 1, 0, (void *)path, i + 1);
   }
   free(path);
   return 0;

@@ -40,16 +40,19 @@
 }
 
 - (void)onClickPlayButton {
-    NSURL *url = [NSURL URLWithString:self.textView.text];
-    NSString *scheme = [[url scheme] lowercaseString];
-    
-    if ([scheme isEqualToString:@"http"]
-        || [scheme isEqualToString:@"https"]
-        || [scheme isEqualToString:@"rtmp"]) {
+//    NSURL *url = [NSURL URLWithString:self.textView.text];
+//    NSString *scheme = [[url scheme] lowercaseString];
+//
+//    if ([scheme isEqualToString:@"http"]
+//        || [scheme isEqualToString:@"https"]
+//        || [scheme isEqualToString:@"rtmp"]) {
+  
+  
+  NSURL *url = [[NSBundle mainBundle] URLForResource:@"point_mouth_waiting_10" withExtension:@"ts"];
         [IJKVideoViewController presentFromViewController:self withTitle:[NSString stringWithFormat:@"URL: %@", url] URL:url completion:^{
 //            [self.navigationController popViewControllerAnimated:NO];
         }];
-    }
+//    }
 }
 
 - (void)textViewDidEndEditing:(UITextView *)textView {

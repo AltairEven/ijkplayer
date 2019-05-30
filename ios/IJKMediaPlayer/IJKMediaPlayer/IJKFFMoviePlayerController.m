@@ -1336,6 +1336,40 @@ inline static void fillMetaInternal(NSMutableDictionary *meta, IjkMediaMeta *raw
         }
         break;
       }
+      case FFP_MSG_VIDEO_TS_RENDER_BEGIN: {
+        NSLog(@"FFP_MSG_VIDEO_TS_RENDER_BEGIN:\n");
+        const char *url = avmsg->obj;
+        if (url != NULL) {
+          char *path = calloc(1024, sizeof(char));
+          memcpy(path, url, avmsg->arg1);
+          NSString *filePath = [NSString stringWithUTF8String:path];
+          free(path);
+          if (filePath) {
+            filePath = [filePath stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+            [[NSNotificationCenter defaultCenter]
+             postNotificationName:IJKMPMoviePlayerDidBeginRenderTsNotification
+             object:self userInfo:@{IJKMPMoviePlayerDidOpenTsFilePathKey: filePath}];
+          }
+        }
+        break;
+      }
+      case FFP_MSG_VIDEO_TS_RENDER_END: {
+        NSLog(@"FFP_MSG_VIDEO_TS_RENDER_END:\n");
+        const char *url = avmsg->obj;
+        if (url != NULL) {
+          char *path = calloc(1024, sizeof(char));
+          memcpy(path, url, avmsg->arg1);
+          NSString *filePath = [NSString stringWithUTF8String:path];
+          free(path);
+          if (filePath) {
+            filePath = [filePath stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+            [[NSNotificationCenter defaultCenter]
+             postNotificationName:IJKMPMoviePlayerDidEndRenderTsNotification
+             object:self userInfo:@{IJKMPMoviePlayerDidOpenTsFilePathKey: filePath}];
+          }
+        }
+        break;
+      }
         default:
             // NSLog(@"unknown FFP_MSG_xxx(%d)\n", avmsg->what);
             break;
@@ -1820,6 +1854,14 @@ static int ijkff_inject_callback(void *opaque, int message, void *data, size_t d
             [self setHudValue:value forKey:key];
         });
     }
+}
+
+#pragma mark TS Extension
+
+- (void)setupPreloadedTSWithPath:(NSString *)path duration:(NSTimeInterval)d {
+  if (!_mediaPlayer)
+    return;
+  ijkmp_setup_increased_duration(_mediaPlayer, d * 1000000, path.UTF8String, (int)[path length]);
 }
 
 @end

@@ -54,7 +54,10 @@
 #define FFP_MSG_GET_IMG_STATE               1000    /* arg1 = timestamp, arg2 = result code, obj = file name*/
 
 #define FFP_MSG_VIDEO_DECODER_OPEN          10001
+
 #define FFP_MSG_VIDEO_TS_FILE_OPEN          11001
+#define FFP_MSG_VIDEO_TS_RENDER_BEGIN          11002
+#define FFP_MSG_VIDEO_TS_RENDER_END          11003
 
 #define FFP_REQ_START                       20001
 #define FFP_REQ_PAUSE                       20002

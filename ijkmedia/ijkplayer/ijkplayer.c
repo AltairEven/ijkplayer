@@ -796,3 +796,11 @@ int ijkmp_get_msg(IjkMediaPlayer *mp, AVMessage *msg, int block)
 
     return -1;
 }
+
+
+void ijkmp_setup_increased_duration(IjkMediaPlayer *mp, int64_t duration, const char *path, int path_len) {
+  assert(mp);
+  pthread_mutex_lock(&mp->mutex);
+  setup_increased_duration(mp->ffplayer, duration, path, path_len);
+  pthread_mutex_unlock(&mp->mutex);
+}

@@ -141,6 +141,9 @@ typedef enum IJKLogLevel {
 #pragma mark KVO properties
 @property (nonatomic, readonly) IJKFFMonitor *monitor;
 
+#pragma mark ts extension
+- (void)setupPreloadedTSWithPath:(NSString *)path duration:(NSTimeInterval)d;
+
 @end
 
 #define IJK_FF_IO_TYPE_READ (1)

@@ -549,6 +549,13 @@ inline static void ffp_reset_demux_cache_control(FFDemuxCacheControl *dcc)
     dcc->current_high_water_mark_in_ms  = DEFAULT_FIRST_HIGH_WATER_MARK_IN_MS;
 }
 
+typedef struct TSSegment {
+  int64_t duration;
+  int64_t duration_increased;
+  char *file_path;
+  int path_len;
+}TSSegment;
+
 /* ffplayer */
 struct IjkMediaMeta;
 struct IJKFF_Pipeline;
@@ -720,6 +727,14 @@ typedef struct FFPlayer {
     char *mediacodec_default_name;
     int ijkmeta_delay_init;
     int render_wait_start;
+  
+  
+  
+    bool has_setup_increased_duration;
+    TSSegment* ts_segments;
+    int ts_segment_count;
+    int64_t ts_frame_count;
+    int ts_segment_index;
 } FFPlayer;
 
 #define fftime_to_milliseconds(ts) (av_rescale(ts, 1000, AV_TIME_BASE))
