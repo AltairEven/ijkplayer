@@ -886,11 +886,12 @@ static void vout_display_overlay_count(FFPlayer *ffp) {
   } else if (ffp->ts_segment_count > last_index) {
     int fps = ffp->is->video_st->avg_frame_rate.num / ffp->is->video_st->avg_frame_rate.den;
     int64_t elapsed = (double)frame_cout / (double)fps * 1000000;
+    int64_t threshhold = 1.0 / (double)fps * 1000000;
     // last segment
     seg = ffp->ts_segments[last_index];
-    if (elapsed >= seg.duration_increased) {
+    if (elapsed >= seg.duration_increased - threshhold) {
       touch_end = true;
-      ffp->ts_segment_index ++;
+      seg = ffp->ts_segments[++ffp->ts_segment_index];
     }
   }
   
