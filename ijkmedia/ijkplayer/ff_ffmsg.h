@@ -67,6 +67,7 @@
 #define FFP_PROP_FLOAT_VIDEO_OUTPUT_FRAMES_PER_SECOND   10002
 #define FFP_PROP_FLOAT_PLAYBACK_RATE                    10003
 #define FFP_PROP_FLOAT_PLAYBACK_VOLUME                  10006
+#define FFP_PROP_FLOAT_PLAYBACK_VOLUME_PERCENT          10008
 #define FFP_PROP_FLOAT_AVDELAY                          10004
 #define FFP_PROP_FLOAT_AVDIFF                           10005
 #define FFP_PROP_FLOAT_DROP_FRAME_RATE                  10007

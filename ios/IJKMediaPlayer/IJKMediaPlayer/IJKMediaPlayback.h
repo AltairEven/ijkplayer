@@ -100,6 +100,7 @@ typedef NS_ENUM(NSInteger, IJKMPMovieTimeOption) {
 
 @property (nonatomic) float playbackRate;
 @property (nonatomic) float playbackVolume;
+@property (nonatomic, readonly) float playbackVolumePercent;
 
 - (UIImage *)thumbnailImageAtCurrentTime;
 

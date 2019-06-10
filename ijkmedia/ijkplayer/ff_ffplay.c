@@ -2216,6 +2216,112 @@ static int decoder_start(Decoder *d, int (*fn)(void *), void *arg, const char *n
     return 0;
 }
 
+
+  
+#define MAX_DETECTED_DB 91
+  
+static inline double logdb(uint64_t v)
+{
+  if (!v)
+    return MAX_DETECTED_DB;
+  double d = v / (double)(0x8000 * 0x8000);
+  return log(d) * -4.3429448190325182765112891891660508229; /* -10/log(10) */
+}
+
+
+static void detect_video_volume(FFPlayer *ffp, AVFilterContext *ctx)
+{
+  
+  AFVolDetectContext *vd = ctx->priv;
+  
+  int i, max_volume, shift;
+  
+  uint64_t nb_samples = 0, power = 0, nb_samples_shift = 0, sum = 0;
+  
+  uint64_t histdb[MAX_DETECTED_DB + 1] = { 0 };
+  
+  
+  
+  for (i = 0; i < 0x10000; i++)
+    
+    nb_samples += vd->histogram[i];
+  
+//  av_log(ctx, AV_LOG_INFO, "n_samples: %"PRId64"\n", nb_samples);
+  
+  if (!nb_samples)
+    return;
+  
+  
+  
+  /* If nb_samples > 1<<34, there is a risk of overflow in the
+   
+   multiplication or the sum: shift all histogram values to avoid that.
+   
+   The total number of samples must be recomputed to avoid rounding
+   
+   errors. */
+  
+  shift = av_log2(nb_samples >> 33);
+  
+  for (i = 0; i < 0x10000; i++) {
+    
+    nb_samples_shift += vd->histogram[i] >> shift;
+    
+    power += (i - 0x8000) * (i - 0x8000) * (vd->histogram[i] >> shift);
+    
+  }
+  
+  if (!nb_samples_shift)
+    return;
+  
+  power = (power + nb_samples_shift / 2) / nb_samples_shift;
+  
+  av_assert0(power <= 0x8000 * 0x8000);
+  
+  double detected_mean_volume = -logdb(power);
+//  av_log(ctx, AV_LOG_INFO, "mean_volume: %.1f dB\n", detected_mean_volume);
+  
+  
+  
+  max_volume = 0x8000;
+  
+  while (max_volume > 0 && !vd->histogram[0x8000 + max_volume] &&
+         
+         !vd->histogram[0x8000 - max_volume])
+    
+    max_volume--;
+  
+  double detected_max_volume = -logdb(max_volume * max_volume);
+//  av_log(ctx, AV_LOG_INFO, "max_volume: %.1f dB\n", detected_max_volume);
+  
+  
+  
+  for (i = 0; i < 0x10000; i++)
+
+    histdb[(int)logdb((i - 0x8000) * (i - 0x8000))] += vd->histogram[i];
+
+  for (i = 0; i <= MAX_DETECTED_DB && !histdb[i]; i++);
+
+  for (; i <= MAX_DETECTED_DB && sum < nb_samples / 1000; i++) {
+
+//    av_log(ctx, AV_LOG_INFO, "histogram_%ddb: %"PRId64"\n", i, histdb[i]);
+
+    sum += histdb[i];
+
+  }
+  
+  double min_volume = 0 - MAX_DETECTED_DB;
+  double real_volume_percent = (detected_mean_volume - min_volume) / (detected_max_volume - min_volume);
+  if (real_volume_percent < 0) {
+    real_volume_percent = 0;
+  }
+  if (real_volume_percent > 1) {
+    real_volume_percent = 1;
+  }
+  ffp->detected_video_volume = real_volume_percent;
+  av_log(ctx, AV_LOG_INFO, "real_volume_db: %f DB\n", ffp->detected_video_volume);
+}
+
 static int ffplay_video_thread(void *arg)
 {
     FFPlayer *ffp = arg;
@@ -2358,6 +2464,7 @@ static int ffplay_video_thread(void *arg)
             if (fabs(is->frame_last_filter_delay) > AV_NOSYNC_THRESHOLD / 10.0)
                 is->frame_last_filter_delay = 0;
             tb = av_buffersink_get_time_base(filt_out);
+            detect_video_volume(ffp ,filt_out);
 #endif
             duration = (frame_rate.num && frame_rate.den ? av_q2d((AVRational){frame_rate.den, frame_rate.num}) : 0);
             pts = (frame->pts == AV_NOPTS_VALUE) ? NAN : frame->pts * av_q2d(tb);
@@ -4996,6 +5103,8 @@ float ffp_get_property_float(FFPlayer *ffp, int id, float default_value)
             return ffp ? ffp->stat.avdiff : default_value;
         case FFP_PROP_FLOAT_PLAYBACK_VOLUME:
             return ffp ? ffp->pf_playback_volume : default_value;
+      case FFP_PROP_FLOAT_PLAYBACK_VOLUME_PERCENT:
+        return ffp ? ffp->detected_video_volume : default_value;
         case FFP_PROP_FLOAT_DROP_FRAME_RATE:
             return ffp ? ffp->stat.drop_frame_rate : default_value;
         default:
