@@ -2217,7 +2217,7 @@ static int decoder_start(Decoder *d, int (*fn)(void *), void *arg, const char *n
 }
 
 
-  
+#if CONFIG_AVFILTER
 #define MAX_DETECTED_DB 91
   
 static inline double logdb(uint64_t v)
@@ -2321,6 +2321,7 @@ static void detect_video_volume(FFPlayer *ffp, AVFilterContext *ctx)
   ffp->detected_video_volume = real_volume_percent;
   av_log(ctx, AV_LOG_INFO, "real_volume_db: %f DB\n", ffp->detected_video_volume);
 }
+#endif
 
 static int ffplay_video_thread(void *arg)
 {
