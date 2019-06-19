@@ -383,6 +383,13 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     return _shouldAutoplay;
 }
 
+- (void)setContentURL:(NSURL *)aUrl {
+  [self pause];
+  // Detect if URL is file path and return proper string for it
+  NSString *aUrlString = [aUrl isFileURL] ? [aUrl path] : [aUrl absoluteString];
+  _urlString = aUrlString;
+}
+
 - (void)prepareToPlay
 {
     if (!_mediaPlayer)

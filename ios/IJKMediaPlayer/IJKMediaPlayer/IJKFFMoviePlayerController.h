@@ -86,6 +86,8 @@ typedef enum IJKLogLevel {
                  withOptions:(IJKFFOptions *)options
                   withGLView:(UIView<IJKSDLGLViewProtocol> *)glView;
 
+- (void)setContentURL:(NSURL *)aUrl;
+
 - (void)prepareToPlay;
 - (void)play;
 - (void)pause;
